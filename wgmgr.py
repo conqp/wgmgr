@@ -46,7 +46,7 @@ class PKI(ConfigParser):    # pylint: disable = R0901
         """Writes to the config file."""
         if fp is None:
             with self.file.open('w') as file:
-                super().write(file)
+                return super().write(file)
 
         return super().write(fp, **kwargs)
 
