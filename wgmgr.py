@@ -100,8 +100,12 @@ def get_args():
 
     parser = ArgumentParser()
     parser.add_argument(
-        '-f', '--file', type=Path, default=Path.cwd().joinpath(CONFIG_FILE),
+        '-c', '--config-file', type=Path,
+        default=Path.cwd().joinpath(CONFIG_FILE),
         help='the config file to use')
+    parser.add_argument(
+        '-f', '--force', action='store_true',
+        help='force override of existing PKI')
     subparsers = parser.add_subparsers(dest='mode')
     init = subparsers.add_parser('init', help='initializes the PKI')
     init.add_argument('network', type=IPv4Network, help='the IPv4 network')
