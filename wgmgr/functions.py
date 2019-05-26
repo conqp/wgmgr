@@ -1,0 +1,37 @@
+"""Common functions."""
+
+from base64 import b64decode
+from configparser import ConfigParser
+from pathlib import Path
+from sys import stdout
+
+
+__all__ = ['stripped', 'wgkey', 'write']
+
+
+def stripped(string):
+    """Returns a stripped string."""
+
+    return string.strip()
+
+
+def wgkey(string):
+    """Checks whether a string is a valid WireGuard key."""
+
+    if len(string) != 44:
+        raise ValueError('Invalid length for WireGuard key.')
+
+    b64decode(string)   # Check for correct base64 encodeing.
+    return string
+
+
+def write(*configs: ConfigParser, path: Path = None):
+    """Writes the config parser to the respective file."""
+
+    if path is None:
+        for config in configs:
+            config.write(stdout)
+    else:
+        with path.open('w') as file:
+            for config in configs:
+                config.write(file)

@@ -6,7 +6,7 @@ setup(
     name='wgmgr',
     author='Richard Neumann',
     author_email='<mail at richard dash neumann dot de>',
-    py_modules=['wgmgr'],
+    packages=['wgmgr'],
     scripts=['wgmgr'],
     url='https://gitlab.com/coNQP/wgmgr',
     license='GPLv3',
