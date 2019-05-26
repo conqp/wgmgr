@@ -40,9 +40,9 @@ def get_args():
         help='force override of existing PKI')
     modes = parser.add_subparsers(dest='mode')
     # Add a PKI.
-    add = modes.add_parser('init', help='initializes the PKI')
-    add.add_argument('network', type=IPv4Network, help='the IPv4 network')
+    add = modes.add_parser('addpki', help='adds a new PKI')
     add.add_argument('name', help="the PKI's name")
+    add.add_argument('network', type=IPv4Network, help='the IPv4 network')
     add.add_argument(
         'address', type=IPv4Address, help="the server's IPv4 address")
     add.add_argument('endpoint', help="the server's IPv4 address")
