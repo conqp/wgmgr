@@ -113,7 +113,8 @@ class PKI(ConfigParser):    # pylint: disable = R0901
 
         config.add_section('WireGuard')
         config['WireGuard']['ListenPort'] = str(port)
-        config['WireGuard']['PrivateKey'] = self['Server']['PrivateKey']
+        server = self['Server']
+        config['WireGuard']['PrivateKey'] = server['PrivateKey']
         yield config
 
         for section in self.sections():
@@ -128,7 +129,7 @@ class PKI(ConfigParser):    # pylint: disable = R0901
             peer['PublicKey'] = client['PublicKey']
 
             with suppress(KeyError):
-                peer['PresharedKey'] = client['PresharedKey']
+                peer['PresharedKey'] = server['PresharedKey']
 
             peer['AllowedIPs'] = client['Address'] + '/32'
             yield config
