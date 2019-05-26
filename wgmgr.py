@@ -42,13 +42,13 @@ class PKI(ConfigParser):    # pylint: disable = R0901
 
         return super().read(filenames, encoding=encoding)
 
-    def write(self, fp=None, space_around_delimiters=True):
+    def write(self, fp=None, **kwargs):     # pylint: disable=W0221
         """Writes to the config file."""
         if fp is None:
-            fp = self.file
+            with self.file.open('w') as file:
+                super().write(file)
 
-        return super().write(
-            fp, space_around_delimiters=space_around_delimiters)
+        return super().write(fp, **kwargs)
 
     def init(self, network: IPv4Network, address: IPv4Address, endpoint: str,
              *, psk: bool = False):
