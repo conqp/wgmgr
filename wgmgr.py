@@ -222,7 +222,7 @@ def main():
                 LOGGER.error('Missing key: "%s".', key_error)
                 exit(2)
 
-            write(client_config, args.out_file)
+            write(client_config, path=args.out_file)
         elif args.type == 'server':
             configs = pki.dump_server(
                 args.device, args.port, description=args.description)
@@ -234,6 +234,6 @@ def main():
                 LOGGER.error('Missing key: "%s".', key_error)
                 exit(2)
 
-            write(*configs, args.out_file)
+            write(*configs, path=args.out_file)
 
     exit(0)
