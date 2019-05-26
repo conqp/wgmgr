@@ -1,6 +1,7 @@
 """Python bindings for WireGuard."""
 
 from argparse import ArgumentParser
+from base64 import b64decode
 from configparser import DuplicateSectionError, ConfigParser
 from contextlib import suppress
 from ipaddress import IPv4Address, IPv4Network
@@ -31,6 +32,16 @@ def stripped(string):
     """Returns a stripped string."""
 
     return string.strip()
+
+
+def wgkey(string):
+    """Checks whether a string is a valid WireGuard key."""
+
+    if len(string) != 44:
+        raise ValueError('Invalid length for WireGuard key.')
+
+    b64decode(string)   # Check for correct base64 encodeing.
+    return string
 
 
 def write(*configs: ConfigParser, path: Path = None):
@@ -183,7 +194,7 @@ def get_args():
         help='generate and add a pre-shared key')
     # Adding a client.
     client = modes.add_parser('client', help='add a client')
-    client.add_argument('pubkey', help="the client's public key")
+    client.add_argument('pubkey', type=wgkey, help="the client's public key")
     client.add_argument(
         'address', type=IPv4Address, help="the client's IPv4Address")
     client.add_argument('name', nargs='?', help="the client's name")
