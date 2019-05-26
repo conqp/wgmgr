@@ -35,6 +35,7 @@ class PKI(ConfigParser):    # pylint: disable = R0901
         super().__init__()
         self.optionxform = str
         self.file = file
+        self.read()
 
     def read(self, filenames=None, encoding=None):
         """Reads from the config file."""
