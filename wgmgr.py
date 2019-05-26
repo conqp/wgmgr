@@ -112,8 +112,8 @@ class PKI(ConfigParser):    # pylint: disable = R0901
         config['Peer']['Endpoint'] = self['Server']['Endpoint']
         return config
 
-    def dump_server(self, device: str, port: int, *, description: str = None):
-        """Dumps the server config."""
+    def dump_netdev(self, device: str, port: int, *, description: str = None):
+        """Dumps a systemd.netdev configuration."""
         config = ConfigParser()
         config.optionxform = stripped
         config.add_section('NetDev')
@@ -145,6 +145,10 @@ class PKI(ConfigParser):    # pylint: disable = R0901
 
             peer['AllowedIPs'] = client['Address'] + '/32'
             yield config
+
+    def dump_server(self, device: str, port: int, *, description: str = None):
+        """Dumps the server config."""
+        return list(self.dump_netdev(device, port, description=description))
 
 
 def get_args():
@@ -224,11 +228,9 @@ def main():
 
             write(client_config, path=args.out_file)
         elif args.type == 'server':
-            configs = pki.dump_server(
-                args.device, args.port, description=args.description)
-
             try:
-                configs = list(configs)
+                configs = pki.dump_server(
+                    args.device, args.port, description=args.description)
             except KeyError as key_error:
                 LOGGER.error('PKI not configured.')
                 LOGGER.error('Missing key: "%s".', key_error)
