@@ -19,7 +19,7 @@ def init():
     """Loads the configuration and initializes the database."""
 
     config = ConfigParser()
-    config.read(CONFIG_FILE)
+    config.read(CONFIG_FILE['db'])
     DATABASE.from_config(config)
 
 
