@@ -7,7 +7,7 @@ setup(
     author='Richard Neumann',
     author_email='<mail at richard dash neumann dot de>',
     packages=['wgmgr'],
-    scripts=['wgmgr'],
+    scripts=['files/wgmgr'],
     url='https://gitlab.com/coNQP/wgmgr',
     license='GPLv3',
     description='WireGuard PKI manager.')
