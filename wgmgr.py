@@ -91,15 +91,47 @@ class PKI(ConfigParser):    # pylint: disable = R0901
         config['Interface']['PrivateKey'] = '<your private key>'
         config['Interface']['Address'] = client['Address']
         config.add_section('Peer')
-        server = self['Server']
-        config['Peer']['PublicKey'] = server['PublicKey']
+        config['Peer']['PublicKey'] = self['Server']['PublicKey']
 
         with suppress(KeyError):    # PSK is optional.
-            config['Peer']['PresharedKey'] = server['PresharedKey']
+            config['Peer']['PresharedKey'] = self['Server']['PresharedKey']
 
-        config['Peer']['AllowedIPs'] = server['Network']
-        config['Peer']['Endpoint'] = server['Endpoint']
+        config['Peer']['AllowedIPs'] = self['Server']['Network']
+        config['Peer']['Endpoint'] = self['Server']['Endpoint']
         return config
+
+    def dump_server(self, device: str, port: int, *, description: str = None):
+        """Dumps the server config."""
+        config = ConfigParser()
+        config.optionxform = stripped
+        config.add_section('NetDev')
+        config['NetDev']['Name'] = device
+        config['NetDev']['Kind'] = 'wireguard'
+
+        if description:
+            config['NetDev']['Description'] = description
+
+        config.add_section('WireGuard')
+        config['WireGuard']['ListenPort'] = str(port)
+        config['WireGuard']['PrivateKey'] = self['Server']['PrivateKey']
+        yield config
+
+        for section in self.sections():
+            if section == 'Server':
+                continue
+
+            config = ConfigParser()
+            config.optionxform = stripped
+            config.add_section('WireGuardPeer')
+            peer = config['WireGuardPeer']
+            client = self[section]
+            peer['PublicKey'] = client['PublicKey']
+
+            with suppress(KeyError):
+                peer['PresharedKey'] = client['PresharedKey']
+
+            peer['AllowedIPs'] = client['Address'] + '/32'
+            yield config
 
 
 def get_args():
@@ -113,8 +145,9 @@ def get_args():
     parser.add_argument(
         '-f', '--force', action='store_true',
         help='force override of existing PKI')
-    subparsers = parser.add_subparsers(dest='mode')
-    init = subparsers.add_parser('init', help='initializes the PKI')
+    modes = parser.add_subparsers(dest='mode')
+    # PKI Initialization.
+    init = modes.add_parser('init', help='initializes the PKI')
     init.add_argument('network', type=IPv4Network, help='the IPv4 network')
     init.add_argument(
         'address', type=IPv4Address, help="the server's IPv4 address")
@@ -122,13 +155,23 @@ def get_args():
     init.add_argument(
         '-p', '--psk', action='store_true',
         help='generate and add a pre-shared key')
-    client = subparsers.add_parser('client', help='add a client')
+    # Adding a client.
+    client = modes.add_parser('client', help='add a client')
     client.add_argument('pubkey', help="the client's public key")
     client.add_argument(
         'address', type=IPv4Address, help="the client's IPv4Address")
     client.add_argument('name', nargs='?', help="the client's name")
-    dump = subparsers.add_parser('dump', help="dumps a client's configuration")
-    dump.add_argument('name', help="the client's name")
+    # Dumping configuration.
+    dump = modes.add_parser('dump')
+    types = dump.add_subparsers(dest='type')
+    dump_client = types.add_parser(
+        'client', help="dumps a client's configuration")
+    dump_client.add_argument('name', help="the client's name")
+    dump_server = types.add_parser(
+        'server', help='dumps the server configuration')
+    dump_server.add_argument('device', help='the WireGuard device name')
+    dump_server.add_argument('port', type=int, help='the listening port')
+    dump_server.add_argument('description', nargs='?', help='a description')
     return parser.parse_args()
 
 
@@ -144,23 +187,36 @@ def main():
             exit(1)
 
         pki.init(args.network, args.address, args.endpoint, psk=args.psk)
+        pki.write()
     elif args.mode == 'client':
         try:
             pki.add_client(args.pubkey, args.address, name=args.name)
         except DuplicateSectionError as dse:
             LOGGER.error('A client named "%s" already exists.', dse.section)
             exit(1)
+
+        pki.write()
     elif args.mode == 'dump':
-        try:
-            client_config = pki.dump_client(args.name)
-        except NoSuchClient as nsc:
-            LOGGER.error('Client "%s" does not exist.', nsc.client)
-            exit(1)
-        except KeyError as key_error:
-            LOGGER.error('PKI not configured. Missing key: "%s".', key_error)
-            exit(2)
+        if args.type == 'client':
+            try:
+                client_config = pki.dump_client(args.name)
+            except NoSuchClient as nsc:
+                LOGGER.error('Client "%s" does not exist.', nsc.client)
+                exit(1)
+            except KeyError as key_error:
+                LOGGER.error('PKI not configured.')
+                LOGGER.error('Missing key: "%s".', key_error)
+                exit(2)
 
-        client_config.write(stdout)
+            client_config.write(stdout)
+        elif args.type == 'server':
+            try:
+                for config in pki.dump_server(
+                        args.device, args.port, description=args.description):
+                    config.write(stdout)
+            except KeyError as key_error:
+                LOGGER.error('PKI not configured.')
+                LOGGER.error('Missing key: "%s".', key_error)
+                exit(2)
 
-    pki.write()
     exit(0)
