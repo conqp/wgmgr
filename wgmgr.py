@@ -64,14 +64,12 @@ class PKI(ConfigParser):    # pylint: disable = R0901
         if psk:
             self['Server']['PresharedKey'] = genpsk()
 
-        return True
-
     def add_client(self, pubkey: str, address: IPv4Address, name: str = None):
         """Adds a new clients."""
         section = name or pubkey
         self.add_section(section)
         self[section]['PublicKey'] = pubkey
-        self[section]['Address'] = address
+        self[section]['Address'] = str(address)
 
     def dump_client(self, name):
         """Dumps the client."""
