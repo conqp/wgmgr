@@ -7,7 +7,7 @@ from logging import getLogger
 from pathlib import Path
 
 from wgmgr.functions import wgkey, write
-from wgmgr.orm import init, Client
+from wgmgr.orm import Client
 from wgmgr.pki import PKI
 
 
@@ -80,7 +80,6 @@ def main():
     """Runs the main program."""
 
     args = get_args()
-    init()
     pki = PKI()
     pki.read(args.config_file)
 

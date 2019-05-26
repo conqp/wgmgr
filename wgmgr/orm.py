@@ -7,20 +7,14 @@ from peewee import CharField, Model
 from peeweeplus import IPv4AddressField, MySQLDatabase
 
 
-__al__ = ['init', 'Client']
+__al__ = ['Client']
 
 
 CONFIG_FILE = '/etc/wgmgr.conf'
-DATABASE = MySQLDatabase(None)
+CONFIG = ConfigParser()
+CONFIG.read(CONFIG_FILE)
+DATABASE = MySQLDatabase.from_config(CONFIG['db'])
 LOCK = Lock()
-
-
-def init():
-    """Loads the configuration and initializes the database."""
-
-    config = ConfigParser()
-    config.read(CONFIG_FILE)
-    DATABASE.from_config(config['db'])
 
 
 class Client(Model):
