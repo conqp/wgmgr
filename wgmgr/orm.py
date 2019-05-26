@@ -11,7 +11,7 @@ __al__ = ['init', 'Client']
 
 
 CONFIG_FILE = '/etc/wgmgr.conf'
-DATABASE = MySQLDatabase()
+DATABASE = MySQLDatabase(None)
 LOCK = Lock()
 
 
