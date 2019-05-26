@@ -52,10 +52,10 @@ def get_args():
     # Adding a client.
     client = modes.add_parser('client', help='add a client')
     client.add_argument('pki', help='the PKI to add the client to')
+    client.add_argument('name', help="the client's name")
     client.add_argument('pubkey', type=wgkey, help="the client's public key")
     client.add_argument(
         'address', type=IPv4Address, help="the client's IPv4Address")
-    client.add_argument('name', nargs='?', help="the client's name")
     # Dumping configuration.
     dump = modes.add_parser('dump')
     dump.add_argument('-o', '--out-file', type=Path, help='the output file')
