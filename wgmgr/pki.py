@@ -55,7 +55,7 @@ class PKI(ConfigParser):    # pylint: disable = R0901
 
         config['Peer']['AllowedIPs'] = section['Network']
         config['Peer']['Endpoint'] = section['Endpoint']
-        return config
+        return config_to_string(config)
 
     def dump_netdev(self, pki, device, port, *, description=None):
         """Dumps a systemd.netdev configuration."""
