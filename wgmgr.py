@@ -33,6 +33,18 @@ def stripped(string):
     return string.strip()
 
 
+def write(*configs: ConfigParser, path: Path = None):
+    """Writes the config parser to the respective file."""
+
+    if path is None:
+        for config in configs:
+            config.write(stdout)
+    else:
+        with path.open('w') as file:
+            for config in configs:
+                config.write(file)
+
+
 class PKI(ConfigParser):    # pylint: disable = R0901
     """A public key infrastructure."""
 
@@ -164,6 +176,7 @@ def get_args():
     client.add_argument('name', nargs='?', help="the client's name")
     # Dumping configuration.
     dump = modes.add_parser('dump')
+    dump.add_argument('-o', '--out-file', type=Path, help='the output file')
     types = dump.add_subparsers(dest='type')
     dump_client = types.add_parser(
         'client', help="dumps a client's configuration")
@@ -209,15 +222,18 @@ def main():
                 LOGGER.error('Missing key: "%s".', key_error)
                 exit(2)
 
-            client_config.write(stdout)
+            write(client_config, args.out_file)
         elif args.type == 'server':
+            configs = pki.dump_server(
+                args.device, args.port, description=args.description)
+
             try:
-                for config in pki.dump_server(
-                        args.device, args.port, description=args.description):
-                    config.write(stdout)
+                configs = list(configs)
             except KeyError as key_error:
                 LOGGER.error('PKI not configured.')
                 LOGGER.error('Missing key: "%s".', key_error)
                 exit(2)
+
+            write(*configs, args.out_file)
 
     exit(0)
