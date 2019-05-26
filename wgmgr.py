@@ -33,6 +33,7 @@ class PKI(ConfigParser):    # pylint: disable = R0901
     def __init__(self, file: Path):
         """Sets the file path."""
         super().__init__()
+        self.optionxform = str
         self.file = file
 
     def read(self, filenames=None, encoding=None):
