@@ -150,6 +150,15 @@ class PKI(ConfigParser):    # pylint: disable = R0901
         """Dumps the server config."""
         return list(self.dump_netdev(device, port, description=description))
 
+    def list_clients(self):
+        """Lists clients."""
+        for section in self.sections():
+            if section == 'Server':
+                continue
+
+            client = self[section]
+            yield (section, client['Address'], client['PublicKey'])
+
 
 def get_args():
     """Parses the command line arguments."""
@@ -190,6 +199,8 @@ def get_args():
     dump_server.add_argument('device', help='the WireGuard device name')
     dump_server.add_argument('port', type=int, help='the listening port')
     dump_server.add_argument('description', nargs='?', help='a description')
+    # Listing of clients.
+    modes.add_parser('list', help='list clients')
     return parser.parse_args()
 
 
@@ -237,5 +248,8 @@ def main():
                 exit(2)
 
             write(*configs, path=args.out_file)
+    elif args.mode == 'list':
+        for client in pki.list_clients():
+            print(*client, flush=True)
 
     exit(0)
