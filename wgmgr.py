@@ -27,13 +27,19 @@ class NoSuchClient(Exception):
         self.client = client
 
 
+def stripped(string):
+    """Returns a stripped string."""
+
+    return string.strip()
+
+
 class PKI(ConfigParser):    # pylint: disable = R0901
     """A public key infrastructure."""
 
     def __init__(self, file: Path):
         """Sets the file path."""
         super().__init__()
-        self.optionxform = str
+        self.optionxform = stripped
         self.file = file
         self.read()
 
@@ -80,6 +86,7 @@ class PKI(ConfigParser):    # pylint: disable = R0901
             raise NoSuchClient(str(key_error))
 
         config = ConfigParser()
+        config.optionxform = stripped
         config.add_section('Interface')
         config['Interface']['PrivateKey'] = '<your private key>'
         config['Interface']['Address'] = client['Address']
