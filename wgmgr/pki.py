@@ -26,7 +26,7 @@ class PKI(ConfigParser):    # pylint: disable = R0901
         self[name]['Network'] = str(network)
         self[name]['Address'] = str(address)
         self[name]['Endpoint'] = endpoint
-        self[name]['PublicKey'], self['Server']['PrivateKey'] = keypair()
+        self[name]['PublicKey'], self[name]['PrivateKey'] = keypair()
 
         if psk:
             self[name]['PresharedKey'] = genpsk()
