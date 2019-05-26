@@ -83,7 +83,7 @@ class PKI(ConfigParser):    # pylint: disable = R0901
                 peer['WireGuardPeer']['PresharedKey'] = \
                     self[pki]['PresharedKey']
 
-            peer['WireGuardPeer']['AllowedIPs'] = str(client.address) + '/32'
+            peer['WireGuardPeer']['AllowedIPs'] = str(client.ipv4addr) + '/32'
             string += config_to_string(config)
 
         return string
