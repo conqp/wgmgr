@@ -64,6 +64,7 @@ class PKI(ConfigParser):    # pylint: disable = R0901
         config.add_section('NetDev')
         config['NetDev']['Name'] = device
         config['NetDev']['Kind'] = 'wireguard'
+        config['NetDev']['Description'] = pki
 
         if description:
             config['NetDev']['Description'] = description
