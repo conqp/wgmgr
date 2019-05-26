@@ -145,7 +145,7 @@ def main():
             exit(1)
     elif args.mode == 'dump':
         try:
-            client_config = pki.dump_client(args.client)
+            client_config = pki.dump_client(args.name)
         except NoSuchClient as nsc:
             LOGGER.error('Client "%s" does not exist.', nsc.client)
             exit(1)
