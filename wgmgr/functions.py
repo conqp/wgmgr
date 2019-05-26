@@ -5,7 +5,16 @@ from io import StringIO
 from sys import stdout
 
 
-__all__ = ['stripped', 'wgkey', 'write']
+__all__ = ['config_to_string', 'stripped', 'wgkey', 'write']
+
+
+def config_to_string(config):
+    """Converts the configuration parser into a string."""
+
+    stringio = StringIO()
+    config.write(stringio)
+    stringio.seek(0)
+    return stringio.read()
 
 
 def stripped(string):
@@ -32,12 +41,3 @@ def write(config, path):
 
     with path.open('w') as file:
         return config.write(file)
-
-
-def config_to_string(config):
-    """Converts the configuration parser into a string."""
-
-    stringio = StringIO()
-    config.write(stringio)
-    stringio.seek(0)
-    return stringio.read()
