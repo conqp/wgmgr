@@ -6,8 +6,8 @@ from ipaddress import IPv4Address, IPv4Network
 from logging import getLogger
 from pathlib import Path
 
-from wgmgr.exceptions import NoSuchClient
 from wgmgr.functions import wgkey, write
+from wgmgr.orm import init, Client
 from wgmgr.pki import PKI
 
 
@@ -16,6 +16,15 @@ __all__ = ['main']
 
 CONFIG_FILE = 'pki.conf'
 LOGGER = getLogger('wgmgr')
+
+
+def list_clients(pkis):
+    """Lists the client of the respective PKI."""
+
+    clients = Client.select().where(Client.pki << pkis) if pkis else Client
+
+    for client in clients:
+        print(client, flush=True)
 
 
 def get_args():
@@ -30,17 +39,19 @@ def get_args():
         '-f', '--force', action='store_true',
         help='force override of existing PKI')
     modes = parser.add_subparsers(dest='mode')
-    # PKI Initialization.
-    init = modes.add_parser('init', help='initializes the PKI')
-    init.add_argument('network', type=IPv4Network, help='the IPv4 network')
-    init.add_argument(
+    # Add a PKI.
+    add = modes.add_parser('init', help='initializes the PKI')
+    add.add_argument('network', type=IPv4Network, help='the IPv4 network')
+    add.add_argument('name', help="the PKI's name")
+    add.add_argument(
         'address', type=IPv4Address, help="the server's IPv4 address")
-    init.add_argument('endpoint', help="the server's IPv4 address")
-    init.add_argument(
+    add.add_argument('endpoint', help="the server's IPv4 address")
+    add.add_argument(
         '-p', '--psk', action='store_true',
         help='generate and add a pre-shared key')
     # Adding a client.
     client = modes.add_parser('client', help='add a client')
+    client.add_argument('pki', help='the PKI to add the client to')
     client.add_argument('pubkey', type=wgkey, help="the client's public key")
     client.add_argument(
         'address', type=IPv4Address, help="the client's IPv4Address")
@@ -51,14 +62,17 @@ def get_args():
     types = dump.add_subparsers(dest='type')
     dump_client = types.add_parser(
         'client', help="dumps a client's configuration")
+    dump_client.add_argument('pki', help='the PKI to dump the client from')
     dump_client.add_argument('name', help="the client's name")
     dump_server = types.add_parser(
         'server', help='dumps the server configuration')
+    dump_server.add_argument('pki', help='the PKI to dump the server from')
     dump_server.add_argument('device', help='the WireGuard device name')
     dump_server.add_argument('port', type=int, help='the listening port')
     dump_server.add_argument('description', nargs='?', help='a description')
     # Listing of clients.
-    modes.add_parser('list', help='list clients')
+    lst = modes.add_parser('list', help='list clients')
+    lst.add_argument('pki', nargs='*', help='the PKI to list')
     return parser.parse_args()
 
 
@@ -66,48 +80,44 @@ def main():
     """Runs the main program."""
 
     args = get_args()
-    pki = PKI(args.config_file)
+    init()
+    pki = PKI()
+    pki.read(args.config_file)
 
-    if args.mode == 'init':
-        if args.config_file.is_file() and not args.force:
-            LOGGER.error('PKI already exists.')
-            exit(1)
-
-        pki.init(args.network, args.address, args.endpoint, psk=args.psk)
-        pki.write()
+    if args.mode == 'addpki':
+        pki.add_pki(
+            args.name, args.network, args.address, args.endpoint, psk=args.psk)
+        write(pki, args.config_file)
     elif args.mode == 'client':
         try:
-            pki.add_client(args.pubkey, args.address, name=args.name)
+            pki.add_client(args.pki, args.name, args.pubkey, args.address)
         except DuplicateSectionError as dse:
             LOGGER.error('A client named "%s" already exists.', dse.section)
             exit(1)
 
-        pki.write()
+        write(pki, args.config_file)
     elif args.mode == 'dump':
         if args.type == 'client':
             try:
-                client_config = pki.dump_client(args.name)
-            except NoSuchClient as nsc:
-                LOGGER.error('Client "%s" does not exist.', nsc.client)
-                exit(1)
+                text = pki.dump_client(args.pki, args.name)
             except KeyError as key_error:
                 LOGGER.error('PKI not configured.')
                 LOGGER.error('Missing key: "%s".', key_error)
                 exit(2)
 
-            write(client_config, path=args.out_file)
+            print(text, flush=True)
         elif args.type == 'server':
             try:
-                configs = pki.dump_server(
-                    args.device, args.port, description=args.description)
+                text = pki.dump_netdev(
+                    args.pki, args.device, args.port,
+                    description=args.description)
             except KeyError as key_error:
                 LOGGER.error('PKI not configured.')
                 LOGGER.error('Missing key: "%s".', key_error)
                 exit(2)
 
-            write(*configs, path=args.out_file)
+            print(text, flush=True)
     elif args.mode == 'list':
-        for client in pki.list_clients():
-            print(*client, flush=True)
+        list_clients(args.pki)
 
     exit(0)

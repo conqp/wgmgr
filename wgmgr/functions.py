@@ -1,8 +1,7 @@
 """Common functions."""
 
 from base64 import b64decode
-from configparser import ConfigParser
-from pathlib import Path
+from io import StringIO
 from sys import stdout
 
 
@@ -25,13 +24,20 @@ def wgkey(string):
     return string
 
 
-def write(*configs: ConfigParser, path: Path = None):
+def write(config, path):
     """Writes the config parser to the respective file."""
 
     if path is None:
-        for config in configs:
-            config.write(stdout)
-    else:
-        with path.open('w') as file:
-            for config in configs:
-                config.write(file)
+        return config.write(stdout)
+
+    with path.open('w') as file:
+        return config.write(file)
+
+
+def config_to_string(config):
+    """Converts the configuration parser into a string."""
+
+    stringio = StringIO()
+    config.write(stringio)
+    stringio.seek(0)
+    return stringio.read()
