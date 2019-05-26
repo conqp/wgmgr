@@ -129,10 +129,10 @@ def main():
     """Runs the main program."""
 
     args = get_args()
-    pki = PKI(args.config)
+    pki = PKI(args.config_file)
 
     if args.mode == 'init':
-        if args.config.is_file() and not args.force:
+        if args.config_file.is_file() and not args.force:
             LOGGER.error('PKI already exists.')
             exit(1)
 
