@@ -5,14 +5,48 @@ from contextlib import suppress
 
 from wgtools import genpsk, keypair
 
-from wgmgr.functions import config_to_string, stripped
+from wgmgr.exceptions import DuplicateClient, NoSuchClient
+from wgmgr.functions import config_to_string, get_client, stripped
 from wgmgr.orm import Client
 
 
-__al__ = ['PKI']
+__all__ = ['add_client', 'change_client', 'delete_client', 'PKIManager']
 
 
-class PKI(ConfigParser):    # pylint: disable = R0901
+def add_client(pki, name, pubkey, address):
+    """Adds a new clients."""
+
+    try:
+        get_client(pki, name)
+    except NoSuchClient:
+        client = Client(pki=pki, pubkey=pubkey, ipv4addr=address, name=name)
+        client.save()
+        return client
+
+    raise DuplicateClient()
+
+
+def change_client(pki, name, *, pubkey=None, address=None):
+    """Modifies an existing client."""
+
+    client = get_client(pki, name)
+
+    if pubkey:
+        client.pubkey = pubkey
+
+    if address:
+        client.ipv4addr = address
+
+    client.save()
+
+
+def delete_client(pki, name):
+    """Deletes the client."""
+
+    get_client(pki, name).delete_instance()
+
+
+class PKIManager(ConfigParser):    # pylint: disable = R0901
     """A public key infrastructure."""
 
     def __init__(self, *args, **kwargs):
@@ -31,22 +65,15 @@ class PKI(ConfigParser):    # pylint: disable = R0901
         if psk:
             self[name]['PresharedKey'] = genpsk()
 
-    def add_client(self, pki, name, pubkey, address):
-        """Adds a new clients."""
-        # Check whether the PKI exists in the config.
-        self[pki]   # pylint: disable=W0104
-        client = Client(pki=pki, pubkey=pubkey, ipv4addr=address, name=name)
-        client.save()
-
     def dump_client(self, pki, name):
         """Dumps the client."""
-        client = Client.get((Client.pki == pki) & (Client.name == name))
+        client = get_client(pki, name)
         section = self[pki]
         config = ConfigParser()
         config.optionxform = stripped
         config.add_section('Interface')
         config['Interface']['PrivateKey'] = '<your private key>'
-        config['Interface']['Address'] = str(client.ipv4addr)
+        config['Interface']['Address'] = str(client.ipv4addr) + '/32'
         config.add_section('Peer')
         config['Peer']['PublicKey'] = section['PublicKey']
 

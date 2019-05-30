@@ -4,8 +4,11 @@ from base64 import b64decode
 from io import StringIO
 from sys import stdout
 
+from wgmgr.exceptions import NoSuchClient
+from wgmgr.orm import Client
 
-__all__ = ['config_to_string', 'stripped', 'wgkey', 'write']
+
+__all__ = ['config_to_string', 'get_client', 'stripped', 'wgkey', 'write']
 
 
 def config_to_string(config):
@@ -15,6 +18,15 @@ def config_to_string(config):
     config.write(stringio)
     stringio.seek(0)
     return stringio.read()
+
+
+def get_client(pki, name):
+    """Returns the respective client."""
+
+    try:
+        return Client.get((Client.pki == pki) & (Client.name == name))
+    except Client.DoesNotExist:
+        raise NoSuchClient()
 
 
 def stripped(string):
