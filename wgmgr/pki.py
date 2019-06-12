@@ -37,7 +37,8 @@ class PKI(ConfigParser):    # pylint: disable = R0901
     def addresses(self):
         """Yields issued IPv4 addresses."""
         for section in self.sections():
-            yield IPv4Address(self[section]['Address'])
+            with suppress(KeyError):
+                yield IPv4Address(self[section]['Address'])
 
     @property
     def port(self):
