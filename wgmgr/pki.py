@@ -188,7 +188,7 @@ class PKI(ConfigParser):    # pylint: disable = R0901
             with suppress(KeyError):    # PSK is optional.
                 peer['WireGuardPeer']['PresharedKey'] = server['PresharedKey']
 
-            peer['WireGuardPeer']['AllowedIPs'] = client['AllowedIPs']
+            peer['WireGuardPeer']['AllowedIPs'] = client['Address'] + '/32'
             string += config_to_string(peer)
 
         return string
