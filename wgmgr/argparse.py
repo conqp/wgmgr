@@ -55,7 +55,6 @@ def _add_remove_client_parser(subparsers):
     """Adds a subparser to remove a client."""
 
     add_client = subparsers.add_parser('remove', help='remove a client')
-    add_client.add_argument('pki', help='the PKI to add the client to')
     add_client.add_argument('name', help="the client's name")
 
 
@@ -72,7 +71,6 @@ def _add_dump_client_parser(subparsers):
         'dump', help="dumps a client's configuration")
     dump_client.add_argument(
         '-o', '--out-file', type=Path, help='the output file')
-    dump_client.add_argument('pki', help='the PKI to dump the client from')
     dump_client.add_argument('name', help="the client's name")
 
 
@@ -95,10 +93,6 @@ def _add_dump_server_parser(subparser):
         'dump', help='dumps the server configuration')
     dump_server.add_argument(
         '-o', '--out-file', type=Path, help='the output file')
-    dump_server.add_argument('pki', help='the PKI to dump the server from')
-    dump_server.add_argument('device', help='the WireGuard device name')
-    dump_server.add_argument('port', type=int, help='the listening port')
-    dump_server.add_argument('description', nargs='?', help='a description')
 
 
 def _add_server_parser(subparsers):
