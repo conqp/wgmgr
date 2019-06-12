@@ -5,7 +5,7 @@ from io import StringIO
 from sys import stdout
 
 
-__all__ = ['config_to_string', 'stripped', 'wgkey', 'write']
+__all__ = ['config_to_string', 'dump', 'stripped', 'wgkey', 'write']
 
 
 def config_to_string(config):
@@ -15,6 +15,16 @@ def config_to_string(config):
     config.write(stringio)
     stringio.seek(0)
     return stringio.read()
+
+
+def dump(text, path=None):
+    """Dumps a text to a file."""
+
+    if path is None:
+        print(text, flush=True)
+    else:
+        with path.open('w') as file:
+            file.write(text)
 
 
 def stripped(string):

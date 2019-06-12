@@ -8,7 +8,7 @@ from wgmgr.exceptions import DuplicateClient
 from wgmgr.exceptions import InvalidClientName
 from wgmgr.exceptions import NoSuchClient
 from wgmgr.exceptions import NotInitialized
-from wgmgr.functions import write
+from wgmgr.functions import dump, write
 from wgmgr.pki import PKI
 
 
@@ -79,7 +79,7 @@ def _dump_client(args, pki):
         LOGGER.error('PKI not initialized.')
         exit(3)
 
-    print(text, flush=True)
+    dump(text, path=args.out_file)
 
 
 def _handle_client(args, pki):
@@ -107,7 +107,7 @@ def _handle_server(args, pki):
             LOGGER.error('PKI not initialized.')
             exit(2)
 
-        print(text, flush=True)
+        dump(text, path=args.out_file)
 
 
 def main():
