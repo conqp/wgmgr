@@ -2,11 +2,13 @@
 
 from configparser import DuplicateSectionError, NoSectionError, ConfigParser
 from contextlib import suppress
+from ipaddress import IPv4Address, IPv4Network
 
 from wgtools import genpsk, keypair
 
 from wgmgr.exceptions import DuplicateClient
 from wgmgr.exceptions import InvalidClientName
+from wgmgr.exceptions import NetworkExhausted
 from wgmgr.exceptions import NoSuchClient
 from wgmgr.exceptions import NotInitialized
 from wgmgr.functions import config_to_string, stripped
@@ -25,6 +27,17 @@ class PKI(ConfigParser):    # pylint: disable = R0901
         """Sets the file path."""
         super().__init__(*args, **kwargs)
         self.optionxform = stripped
+
+    @property
+    def network(self):
+        """Returns the IPv4 network."""
+        return IPv4Network(self[SERVER]['Network'])
+
+    @property
+    def addresses(self):
+        """Yields issued IPv4 addresses."""
+        for section in self.sections():
+            yield IPv4Address(self[section]['Address'])
 
     @property
     def port(self):
@@ -54,6 +67,16 @@ class PKI(ConfigParser):    # pylint: disable = R0901
         if psk:
             self[SERVER]['PresharedKey'] = genpsk()
 
+    def get_address(self):
+        """Returns a free address."""
+        addresses = {address for address in self.addresses}
+
+        for address in self.network:
+            if address not in addresses:
+                return address
+
+        raise NetworkExhausted()
+
     def add_client(self, pubkey, address=None, name=None):
         """Adds a client."""
         section = str(pubkey) if name is None else str(name)
@@ -68,6 +91,7 @@ class PKI(ConfigParser):    # pylint: disable = R0901
 
         client = self[section]
         client['PublicKey'] = str(pubkey)
+        address = self.get_address() if address is None else address
         client['Address'] = str(address)
 
     def modify_client(self, name, pubkey=None, address=None):

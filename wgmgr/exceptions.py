@@ -4,6 +4,7 @@
 __all__ = [
     'DuplicateClient',
     'InvalidClientName',
+    'NetworkExhausted',
     'NoSuchClient',
     'NotInitialized']
 
@@ -16,6 +17,12 @@ class DuplicateClient(Exception):
 
 class InvalidClientName(Exception):
     """Indicates an invalid client name."""
+
+
+class NetworkExhausted(Exception):
+    """Indicates that there are no more
+    free IPv4 addresses in the network.
+    """
 
 
 class NoSuchClient(Exception):

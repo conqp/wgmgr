@@ -35,8 +35,9 @@ def _add_add_client_parser(subparsers):
     add_client.add_argument(
         'pubkey', type=wgkey, help="the client's public key")
     add_client.add_argument(
-        'address', type=IPv4Address, help="the client's IPv4Address")
-    add_client.add_argument('name', nargs='?', help='a descriptive name')
+        'address', nargs='?', type=IPv4Address,
+        help="the client's IPv4Address")
+    add_client.add_argument('-n', '--name', help='a descriptive name')
 
 
 def _add_modify_client_parser(subparsers):
