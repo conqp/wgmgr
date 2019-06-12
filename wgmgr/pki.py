@@ -1,52 +1,24 @@
 """PKI management."""
 
-from configparser import ConfigParser
+from configparser import DuplicateSectionError, NoSectionError, ConfigParser
 from contextlib import suppress
 
 from wgtools import genpsk, keypair
 
-from wgmgr.exceptions import DuplicateClient, NoSuchClient
-from wgmgr.functions import config_to_string, get_client, stripped
-from wgmgr.orm import Client
+from wgmgr.exceptions import DuplicateClient
+from wgmgr.exceptions import InvalidClientName
+from wgmgr.exceptions import NoSuchClient
+from wgmgr.exceptions import NotInitialized
+from wgmgr.functions import config_to_string, stripped
 
 
-__all__ = ['add_client', 'change_client', 'delete_client', 'PKIManager']
+__all__ = ['PKI']
 
 
-def add_client(pki, name, pubkey, address):
-    """Adds a new clients."""
-
-    try:
-        get_client(pki, name)
-    except NoSuchClient:
-        client = Client(pki=pki, pubkey=pubkey, ipv4addr=address, name=name)
-        client.save()
-        return client
-
-    raise DuplicateClient()
+SERVER = 'Server'
 
 
-def change_client(pki, name, *, pubkey=None, address=None):
-    """Modifies an existing client."""
-
-    client = get_client(pki, name)
-
-    if pubkey:
-        client.pubkey = pubkey
-
-    if address:
-        client.ipv4addr = address
-
-    client.save()
-
-
-def delete_client(pki, name):
-    """Deletes the client."""
-
-    get_client(pki, name).delete_instance()
-
-
-class PKIManager(ConfigParser):    # pylint: disable = R0901
+class PKI(ConfigParser):    # pylint: disable = R0901
     """A public key infrastructure."""
 
     def __init__(self, *args, **kwargs):
@@ -54,64 +26,144 @@ class PKIManager(ConfigParser):    # pylint: disable = R0901
         super().__init__(*args, **kwargs)
         self.optionxform = stripped
 
-    def add_pki(self, name, network, address, endpoint, *, psk=False):
+    @property
+    def port(self):
+        """Returns the server's port."""
+        _, port = self[SERVER]['Endpoint'].rsplit(':', maxsplit=1)
+        return int(port)
+
+    @property
+    def clients(self):
+        """Yields all client sections."""
+        for section in self.sections():
+            if section == SERVER:
+                continue
+
+            yield (section, self[section])
+
+    def init(self, name, description, network, address, endpoint, psk=False):
         """Initializes the PKI."""
-        self.add_section(name)
-        self[name]['Network'] = str(network)
-        self[name]['Address'] = str(address)
-        self[name]['Endpoint'] = endpoint
-        self[name]['PublicKey'], self[name]['PrivateKey'] = keypair()
+        self.add_section(SERVER)
+        self[SERVER]['Name'] = str(name)
+        self[SERVER]['Description'] = str(description)
+        self[SERVER]['Network'] = str(network)
+        self[SERVER]['Address'] = str(address)
+        self[SERVER]['Endpoint'] = str(endpoint)
+        self[SERVER]['PublicKey'], self[SERVER]['PrivateKey'] = keypair()
 
         if psk:
-            self[name]['PresharedKey'] = genpsk()
+            self[SERVER]['PresharedKey'] = genpsk()
 
-    def dump_client(self, pki, name):
+    def add_client(self, pubkey, address=None, name=None):
+        """Adds a client."""
+        section = str(pubkey) if name is None else str(name)
+
+        if section == SERVER:
+            raise InvalidClientName()
+
+        try:
+            self.add_section(section)
+        except DuplicateSectionError:
+            raise DuplicateClient(section)
+
+        client = self[section]
+        client['PublicKey'] = str(pubkey)
+        client['Address'] = str(address)
+
+    def modify_client(self, name, pubkey=None, address=None):
+        """Modifies a client."""
+        if name == SERVER:
+            raise InvalidClientName()
+
+        try:
+            client = self[name]
+        except NoSectionError:
+            raise NoSuchClient(name)
+
+        if pubkey is not None:
+            client['PublicKey'] = str(pubkey)
+
+        if address is not None:
+            client['Address'] = str(address)
+
+    def remove_client(self, name):
+        """Removes the respective client."""
+        if name == SERVER:
+            raise InvalidClientName()
+
+        return self.remove_section(name)
+
+    def list_clients(self):
+        """Lists all clients."""
+        clients = ConfigParser()
+        clients.optionxform = stripped
+
+        for name, section in self.clients:
+            clients.add_section(name)
+            client = clients[name]
+            client['PublicKey'] = section['PublicKey']
+            client['Address'] = section['Address']
+
+        return config_to_string(clients)
+
+    def dump_client(self, name):
         """Dumps the client."""
-        client = get_client(pki, name)
-        section = self[pki]
+        if name == SERVER:
+            raise InvalidClientName()
+
+        try:
+            server = self['Server']
+        except NoSectionError:
+            raise NotInitialized()
+
+        try:
+            client = self[name]
+        except NoSectionError:
+            raise NoSuchClient(name)
+
         config = ConfigParser()
         config.optionxform = stripped
         config.add_section('Interface')
         config['Interface']['PrivateKey'] = '<your private key>'
-        config['Interface']['Address'] = str(client.ipv4addr) + '/32'
+        config['Interface']['Address'] = client['Address'] + '/32'
         config.add_section('Peer')
-        config['Peer']['PublicKey'] = section['PublicKey']
+        config['Peer']['PublicKey'] = server['PublicKey']
 
         with suppress(KeyError):    # PSK is optional.
-            config['Peer']['PresharedKey'] = section['PresharedKey']
+            config['Peer']['PresharedKey'] = server['PresharedKey']
 
-        config['Peer']['AllowedIPs'] = section['Network']
-        config['Peer']['Endpoint'] = section['Endpoint']
+        config['Peer']['AllowedIPs'] = server['Network']
+        config['Peer']['Endpoint'] = server['Endpoint']
         return config_to_string(config)
 
-    def dump_netdev(self, pki, device, port, *, description=None):
+    def dump_netdev(self):
         """Dumps a systemd.netdev configuration."""
+        try:
+            server = self[SERVER]
+        except NoSectionError:
+            raise NotInitialized()
+
         config = ConfigParser()
         config.optionxform = stripped
         config.add_section('NetDev')
-        config['NetDev']['Name'] = device
+        config['NetDev']['Name'] = server['Name']
         config['NetDev']['Kind'] = 'wireguard'
-        config['NetDev']['Description'] = pki
-
-        if description:
-            config['NetDev']['Description'] = description
-
+        config['NetDev']['Description'] = server['Description']
         config.add_section('WireGuard')
-        config['WireGuard']['ListenPort'] = str(port)
-        config['WireGuard']['PrivateKey'] = self[pki]['PrivateKey']
+        config['WireGuard']['ListenPort'] = str(self.port)
+        config['WireGuard']['PrivateKey'] = server['PrivateKey']
         string = config_to_string(config)
 
-        for client in Client.select().where(Client.pki == pki):
+        for _, client in self.clients:
             peer = ConfigParser()
             peer.optionxform = stripped
             peer.add_section('WireGuardPeer')
-            peer['WireGuardPeer']['PublicKey'] = client.pubkey
+            peer['WireGuardPeer']['PublicKey'] = client['PublicKey']
 
-            with suppress(KeyError):
-                peer['WireGuardPeer']['PresharedKey'] = \
-                    self[pki]['PresharedKey']
+            with suppress(KeyError):    # PSK is optional.
+                peer['WireGuardPeer']['PresharedKey'] = server['PresharedKey']
 
-            peer['WireGuardPeer']['AllowedIPs'] = str(client.ipv4addr) + '/32'
+            peer['WireGuardPeer']['AllowedIPs'] = client['AllowedIPs']
             string += config_to_string(peer)
 
         return string

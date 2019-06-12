@@ -13,11 +13,12 @@ __all__ = ['get_args']
 CONFIG_FILE = 'pki.conf'
 
 
-def _add_addpki_parser(subparsers):
+def _add_initpki_parser(subparsers):
     """Adds the addpki parser."""
 
-    add = subparsers.add_parser('addpki', help='adds a new PKI')
-    add.add_argument('name', help="the PKI's name")
+    add = subparsers.add_parser('init', help='initializes the PKI')
+    add.add_argument('name', help='the name of the network device')
+    add.add_argument('description', help='a description of the network')
     add.add_argument('network', type=IPv4Network, help='the IPv4 network')
     add.add_argument(
         'address', type=IPv4Address, help="the server's IPv4 address")
@@ -31,30 +32,28 @@ def _add_add_client_parser(subparsers):
     """Adds a subparser to add a client."""
 
     add_client = subparsers.add_parser('add', help='add a client')
-    add_client.add_argument('pki', help='the PKI to add the client to')
-    add_client.add_argument('name', help="the client's name")
     add_client.add_argument(
         'pubkey', type=wgkey, help="the client's public key")
     add_client.add_argument(
         'address', type=IPv4Address, help="the client's IPv4Address")
+    add_client.add_argument('name', nargs='?', help='a descriptive name')
 
 
-def _add_change_client_parser(subparsers):
-    """Adds a subparser to change a client."""
+def _add_modify_client_parser(subparsers):
+    """Adds a subparser to modify a client."""
 
-    add_client = subparsers.add_parser('change', help='change a client')
-    add_client.add_argument('pki', help='the PKI to add the client to')
-    add_client.add_argument('name', help="the client's name")
+    add_client = subparsers.add_parser('modify', help='modify a client')
     add_client.add_argument(
-        'pubkey', type=wgkey, help="the client's public key")
+        '-p', '--pubkey', type=wgkey, help="the client's public key")
     add_client.add_argument(
-        'address', type=IPv4Address, help="the client's IPv4Address")
+        '-a', '--address', type=IPv4Address, help="the client's IPv4Address")
+    add_client.add_argument('name', nargs='?', help="the client's name")
 
 
-def _add_delete_client_parser(subparsers):
-    """Adds a subparser to delete a client."""
+def _add_remove_client_parser(subparsers):
+    """Adds a subparser to remove a client."""
 
-    add_client = subparsers.add_parser('delete', help='delete a client')
+    add_client = subparsers.add_parser('remove', help='remove a client')
     add_client.add_argument('pki', help='the PKI to add the client to')
     add_client.add_argument('name', help="the client's name")
 
@@ -62,8 +61,7 @@ def _add_delete_client_parser(subparsers):
 def _add_list_clients_parser(subparsers):
     """Adds a parser to list clients."""
 
-    list_clients = subparsers.add_parser('list', help='list clients')
-    list_clients.add_argument('pki', nargs='*', help='the PKI to list')
+    subparsers.add_parser('list', help='list clients')
 
 
 def _add_dump_client_parser(subparsers):
@@ -83,8 +81,8 @@ def _add_client_parser(subparsers):
     client = subparsers.add_parser('client', help='handle clients')
     action = client.add_subparsers(dest='action')
     _add_add_client_parser(action)
-    _add_change_client_parser(action)
-    _add_delete_client_parser(action)
+    _add_modify_client_parser(action)
+    _add_remove_client_parser(action)
     _add_list_clients_parser(action)
     _add_dump_client_parser(action)
 
@@ -122,7 +120,7 @@ def get_args():
         '-f', '--force', action='store_true',
         help='force override of existing PKI')
     modes = parser.add_subparsers(dest='mode')
-    _add_addpki_parser(modes)
+    _add_initpki_parser(modes)
     _add_client_parser(modes)
     _add_server_parser(modes)
     return parser.parse_args()

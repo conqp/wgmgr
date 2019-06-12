@@ -1,7 +1,11 @@
 """Common exceptions."""
 
 
-__all__ = ['DuplicateClient', 'NoSuchClient']
+__all__ = [
+    'DuplicateClient',
+    'InvalidClientName',
+    'NoSuchClient',
+    'NotInitialized']
 
 
 class DuplicateClient(Exception):
@@ -10,5 +14,13 @@ class DuplicateClient(Exception):
     """
 
 
+class InvalidClientName(Exception):
+    """Indicates an invalid client name."""
+
+
 class NoSuchClient(Exception):
     """Indicates that the respective client does not exist."""
+
+
+class NotInitialized(Exception):
+    """Indicates that the PKI is not initialized."""
