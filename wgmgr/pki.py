@@ -72,8 +72,8 @@ class PKI(ConfigParser):    # pylint: disable = R0901
         """Returns a free address."""
         addresses = {address for address in self.addresses}
 
-        for address in self.network:
-            if address not in addresses:
+        for count, address in enumerate(self.network, start=1):
+            if count > 1 and address not in addresses:
                 return address
 
         raise NetworkExhausted()
