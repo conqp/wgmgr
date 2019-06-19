@@ -1,6 +1,6 @@
 """PKI management."""
 
-from configparser import DuplicateSectionError, NoSectionError, ConfigParser
+from configparser import DuplicateSectionError, ConfigParser
 from contextlib import suppress
 from ipaddress import IPv4Address, IPv4Network
 from os import linesep
@@ -103,7 +103,7 @@ class PKI(ConfigParser):    # pylint: disable = R0901
 
         try:
             client = self[name]
-        except NoSectionError:
+        except KeyError:
             raise NoSuchClient(name)
 
         if pubkey is not None:
@@ -139,12 +139,12 @@ class PKI(ConfigParser):    # pylint: disable = R0901
 
         try:
             server = self['Server']
-        except NoSectionError:
+        except KeyError:
             raise NotInitialized()
 
         try:
             client = self[name]
-        except NoSectionError:
+        except KeyError:
             raise NoSuchClient(name)
 
         config = ConfigParser()
@@ -166,7 +166,7 @@ class PKI(ConfigParser):    # pylint: disable = R0901
         """Dumps a systemd.netdev configuration."""
         try:
             server = self[SERVER]
-        except NoSectionError:
+        except KeyError:
             raise NotInitialized()
 
         config = ConfigParser()
