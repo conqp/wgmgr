@@ -2,6 +2,7 @@
 
 from base64 import b64decode
 from io import StringIO
+from os import linesep
 from sys import stdout
 
 
@@ -25,6 +26,7 @@ def dump(text, path=None):
     else:
         with path.open('w') as file:
             file.write(text)
+            file.write(linesep)
 
 
 def stripped(string):
@@ -47,7 +49,9 @@ def write(config, path):
     """Writes the config parser to the respective file."""
 
     if path is None:
-        return config.write(stdout)
-
-    with path.open('w') as file:
-        return config.write(file)
+        config.write(stdout)
+        print(flush=True)
+    else:
+        with path.open('w') as file:
+            config.write(file)
+            file.write(linesep)

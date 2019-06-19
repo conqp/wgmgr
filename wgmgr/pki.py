@@ -3,6 +3,7 @@
 from configparser import DuplicateSectionError, NoSectionError, ConfigParser
 from contextlib import suppress
 from ipaddress import IPv4Address, IPv4Network
+from os import linesep
 
 from wgtools import genpsk, keypair
 
@@ -129,7 +130,7 @@ class PKI(ConfigParser):    # pylint: disable = R0901
             client['PublicKey'] = section['PublicKey']
             client['Address'] = section['Address']
 
-        return config_to_string(clients)
+        return config_to_string(clients).strip(linesep)
 
     def dump_client(self, name):
         """Dumps the client."""
@@ -150,7 +151,7 @@ class PKI(ConfigParser):    # pylint: disable = R0901
         config.optionxform = stripped
         config.add_section('Interface')
         config['Interface']['PrivateKey'] = '<your private key>'
-        config['Interface']['Address'] = client['Address'] + '/32'
+        config['Interface']['Address'] = client['Address']
         config.add_section('Peer')
         config['Peer']['PublicKey'] = server['PublicKey']
 
@@ -159,7 +160,7 @@ class PKI(ConfigParser):    # pylint: disable = R0901
 
         config['Peer']['AllowedIPs'] = server['Network']
         config['Peer']['Endpoint'] = server['Endpoint']
-        return config_to_string(config)
+        return config_to_string(config).strip(linesep)
 
     def dump_netdev(self):
         """Dumps a systemd.netdev configuration."""
@@ -188,7 +189,7 @@ class PKI(ConfigParser):    # pylint: disable = R0901
             with suppress(KeyError):    # PSK is optional.
                 peer['WireGuardPeer']['PresharedKey'] = server['PresharedKey']
 
-            peer['WireGuardPeer']['AllowedIPs'] = client['Address'] + '/32'
+            peer['WireGuardPeer']['AllowedIPs'] = client['Address']
             string += config_to_string(peer)
 
-        return string
+        return string.strip(linesep)
