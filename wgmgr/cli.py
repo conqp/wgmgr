@@ -5,7 +5,9 @@ from logging import getLogger
 
 from wgmgr.argparse import get_args
 from wgmgr.exceptions import DuplicateClient
+from wgmgr.exceptions import DuplicateIPv4Address
 from wgmgr.exceptions import InvalidClientName
+from wgmgr.exceptions import NetworkExhausted
 from wgmgr.exceptions import NoSuchClient
 from wgmgr.exceptions import NotInitialized
 from wgmgr.functions import dump, write
@@ -29,6 +31,12 @@ def _add_client(args, pki):
     except DuplicateClient:
         LOGGER.error('A client named "%s" already exists.', args.name)
         exit(2)
+    except DuplicateIPv4Address:
+        LOGGER.error('IPv4 address "%s" is already in use.', args.address)
+        exit(3)
+    except NetworkExhausted:
+        LOGGER.error('No more free IPv4 addresses available.')
+        exit(4)
 
     write(pki, args.config_file)
 
@@ -42,9 +50,12 @@ def _modify_client(args, pki):
     except InvalidClientName:
         LOGGER.error('Invalid client name: "%s".', args.name)
         exit(1)
-    except NoSuchClient:
-        LOGGER.error('No such client: "%s".', args.name)
-        exit(2)
+    except DuplicateIPv4Address:
+        LOGGER.error('IPv4 address "%s" is already in use.', args.address)
+        exit(3)
+    except NetworkExhausted:
+        LOGGER.error('No more free IPv4 addresses available.')
+        exit(4)
 
     write(pki, args.config_file)
 

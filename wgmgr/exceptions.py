@@ -3,6 +3,7 @@
 
 __all__ = [
     'DuplicateClient',
+    'DuplicateIPv4Address',
     'InvalidClientName',
     'NetworkExhausted',
     'NoSuchClient',
@@ -13,6 +14,10 @@ class DuplicateClient(Exception):
     """Indicataes that a client with that name
     already exists in the respective PKI.
     """
+
+
+class DuplicateIPv4Address(Exception):
+    """Indicates that the respective IPv4 address is already in use."""
 
 
 class InvalidClientName(Exception):

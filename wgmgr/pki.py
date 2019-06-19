@@ -8,6 +8,7 @@ from os import linesep
 from wgtools import genpsk, keypair
 
 from wgmgr.exceptions import DuplicateClient
+from wgmgr.exceptions import DuplicateIPv4Address
 from wgmgr.exceptions import InvalidClientName
 from wgmgr.exceptions import NetworkExhausted
 from wgmgr.exceptions import NoSuchClient
@@ -56,6 +57,7 @@ class PKI(ConfigParser):    # pylint: disable = R0901
 
             yield (section, self[section])
 
+    # pylint: disable=R0913
     def init(self, name, description, network, address, endpoint, psk=False):
         """Initializes the PKI."""
         self.add_section(SERVER)
@@ -91,9 +93,13 @@ class PKI(ConfigParser):    # pylint: disable = R0901
         except DuplicateSectionError:
             raise DuplicateClient(section)
 
+        if address is None:
+            address = self.get_address()
+        elif address in self.addresses:
+            raise DuplicateIPv4Address()
+
         client = self[section]
         client['PublicKey'] = str(pubkey)
-        address = self.get_address() if address is None else address
         client['Address'] = str(address)
 
     def modify_client(self, name, pubkey=None, address=None):
@@ -110,6 +116,9 @@ class PKI(ConfigParser):    # pylint: disable = R0901
             client['PublicKey'] = str(pubkey)
 
         if address is not None:
+            if address in self.addresses:
+                raise DuplicateIPv4Address()
+
             client['Address'] = str(address)
 
     def remove_client(self, name):
