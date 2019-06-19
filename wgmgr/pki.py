@@ -151,7 +151,9 @@ class PKI(ConfigParser):    # pylint: disable = R0901
         config.optionxform = stripped
         config.add_section('Interface')
         config['Interface']['PrivateKey'] = '<your private key>'
-        config['Interface']['Address'] = client['Address']
+        address = IPv4Address(client['Address'])
+        network = IPv4Network(address)
+        config['Interface']['Address'] = str(network)
         config.add_section('Peer')
         config['Peer']['PublicKey'] = server['PublicKey']
 
@@ -189,7 +191,9 @@ class PKI(ConfigParser):    # pylint: disable = R0901
             with suppress(KeyError):    # PSK is optional.
                 peer['WireGuardPeer']['PresharedKey'] = server['PresharedKey']
 
-            peer['WireGuardPeer']['AllowedIPs'] = client['Address']
+            address = IPv4Address(client['Address'])
+            network = IPv4Network(address)
+            peer['WireGuardPeer']['AllowedIPs'] = str(network)
             string += config_to_string(peer)
 
         return string.strip(linesep)
