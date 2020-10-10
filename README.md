@@ -7,7 +7,7 @@ A WireGuard networks manager.
 
 ## Usage
 `wgmgr` is intended to be primarily a command line tool, not a library.  
-Currently there is not man page available, so please refer to
+Currently there is no man page available, so please refer to
 
     wgmgr -h
 
