@@ -32,12 +32,12 @@ class PKI(ConfigParser):    # pylint: disable = R0901
 
     @property
     def network(self):
-        """Returns the IPv4 network."""
+        """Returns the IP network."""
         return ip_network(self[SERVER]['Network'])
 
     @property
     def addresses(self):
-        """Yields issued IPv4 addresses."""
+        """Yields issued IP addresses."""
         for section in self.sections():
             with suppress(KeyError):
                 yield ip_address(self[section]['Address'])

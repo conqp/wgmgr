@@ -27,7 +27,7 @@ class InvalidClientName(Exception):
 
 class NetworkExhausted(Exception):
     """Indicates that there are no more
-    free IPv4 addresses in the network.
+    free IP addresses in the network.
     """
 
 
