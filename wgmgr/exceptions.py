@@ -3,11 +3,12 @@
 
 __all__ = [
     'DuplicateClient',
-    'DuplicateIPv4Address',
+    'DuplicateIPAddress',
     'InvalidClientName',
     'NetworkExhausted',
     'NoSuchClient',
-    'NotInitialized']
+    'NotInitialized'
+]
 
 
 class DuplicateClient(Exception):
@@ -16,8 +17,8 @@ class DuplicateClient(Exception):
     """
 
 
-class DuplicateIPv4Address(Exception):
-    """Indicates that the respective IPv4 address is already in use."""
+class DuplicateIPAddress(Exception):
+    """Indicates that the respective IP address is already in use."""
 
 
 class InvalidClientName(Exception):

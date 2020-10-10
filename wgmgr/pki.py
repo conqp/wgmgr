@@ -2,13 +2,13 @@
 
 from configparser import DuplicateSectionError, ConfigParser
 from contextlib import suppress
-from ipaddress import IPv4Address, IPv4Network
+from ipaddress import ip_address, ip_network
 from os import linesep
 
 from wgtools import genpsk, keypair
 
 from wgmgr.exceptions import DuplicateClient
-from wgmgr.exceptions import DuplicateIPv4Address
+from wgmgr.exceptions import DuplicateIPAddress
 from wgmgr.exceptions import InvalidClientName
 from wgmgr.exceptions import NetworkExhausted
 from wgmgr.exceptions import NoSuchClient
@@ -33,14 +33,14 @@ class PKI(ConfigParser):    # pylint: disable = R0901
     @property
     def network(self):
         """Returns the IPv4 network."""
-        return IPv4Network(self[SERVER]['Network'])
+        return ip_network(self[SERVER]['Network'])
 
     @property
     def addresses(self):
         """Yields issued IPv4 addresses."""
         for section in self.sections():
             with suppress(KeyError):
-                yield IPv4Address(self[section]['Address'])
+                yield ip_address(self[section]['Address'])
 
     @property
     def port(self):
@@ -73,7 +73,7 @@ class PKI(ConfigParser):    # pylint: disable = R0901
 
     def get_address(self):
         """Returns a free address."""
-        addresses = {address for address in self.addresses}
+        addresses = set(self.addresses)
 
         for count, address in enumerate(self.network, start=1):
             if count > 1 and address not in addresses:
@@ -91,12 +91,12 @@ class PKI(ConfigParser):    # pylint: disable = R0901
         try:
             self.add_section(section)
         except DuplicateSectionError:
-            raise DuplicateClient(section)
+            raise DuplicateClient(section) from None
 
         if address is None:
             address = self.get_address()
         elif address in self.addresses:
-            raise DuplicateIPv4Address()
+            raise DuplicateIPAddress()
 
         client = self[section]
         client['PublicKey'] = str(pubkey)
@@ -110,14 +110,14 @@ class PKI(ConfigParser):    # pylint: disable = R0901
         try:
             client = self[name]
         except KeyError:
-            raise NoSuchClient(name)
+            raise NoSuchClient(name) from None
 
         if pubkey is not None:
             client['PublicKey'] = str(pubkey)
 
         if address is not None:
             if address in self.addresses:
-                raise DuplicateIPv4Address()
+                raise DuplicateIPAddress()
 
             client['Address'] = str(address)
 
@@ -149,19 +149,18 @@ class PKI(ConfigParser):    # pylint: disable = R0901
         try:
             server = self['Server']
         except KeyError:
-            raise NotInitialized()
+            raise NotInitialized() from None
 
         try:
             client = self[name]
         except KeyError:
-            raise NoSuchClient(name)
+            raise NoSuchClient(name) from None
 
         config = ConfigParser()
         config.optionxform = stripped
         config.add_section('Interface')
         config['Interface']['PrivateKey'] = '<your private key>'
-        address = IPv4Address(client['Address'])
-        network = IPv4Network(address)
+        network = ip_network(ip_address(client['Address']))
         config['Interface']['Address'] = str(network)
         config.add_section('Peer')
         config['Peer']['PublicKey'] = server['PublicKey']
@@ -178,7 +177,7 @@ class PKI(ConfigParser):    # pylint: disable = R0901
         try:
             server = self[SERVER]
         except KeyError:
-            raise NotInitialized()
+            raise NotInitialized() from None
 
         config = ConfigParser()
         config.optionxform = stripped
@@ -200,8 +199,7 @@ class PKI(ConfigParser):    # pylint: disable = R0901
             with suppress(KeyError):    # PSK is optional.
                 peer['WireGuardPeer']['PresharedKey'] = server['PresharedKey']
 
-            address = IPv4Address(client['Address'])
-            network = IPv4Network(address)
+            network = ip_network(ip_address(client['Address']))
             peer['WireGuardPeer']['AllowedIPs'] = str(network)
             string += config_to_string(peer)
 

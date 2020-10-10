@@ -2,10 +2,11 @@
 
 from configparser import DuplicateSectionError
 from logging import getLogger
+from sys import exit    # pylint: disable=W0622
 
 from wgmgr.argparse import get_args
 from wgmgr.exceptions import DuplicateClient
-from wgmgr.exceptions import DuplicateIPv4Address
+from wgmgr.exceptions import DuplicateIPAddress
 from wgmgr.exceptions import InvalidClientName
 from wgmgr.exceptions import NetworkExhausted
 from wgmgr.exceptions import NoSuchClient
@@ -31,11 +32,11 @@ def _add_client(args, pki):
     except DuplicateClient:
         LOGGER.error('A client named "%s" already exists.', args.name)
         exit(2)
-    except DuplicateIPv4Address:
-        LOGGER.error('IPv4 address "%s" is already in use.', args.address)
+    except DuplicateIPAddress:
+        LOGGER.error('IP address "%s" is already in use.', args.address)
         exit(3)
     except NetworkExhausted:
-        LOGGER.error('No more free IPv4 addresses available.')
+        LOGGER.error('No more free IP addresses available.')
         exit(4)
 
     write(pki, args.config_file)
@@ -50,11 +51,11 @@ def _modify_client(args, pki):
     except InvalidClientName:
         LOGGER.error('Invalid client name: "%s".', args.name)
         exit(1)
-    except DuplicateIPv4Address:
-        LOGGER.error('IPv4 address "%s" is already in use.', args.address)
+    except DuplicateIPAddress:
+        LOGGER.error('IP address "%s" is already in use.', args.address)
         exit(3)
     except NetworkExhausted:
-        LOGGER.error('No more free IPv4 addresses available.')
+        LOGGER.error('No more free IP addresses available.')
         exit(4)
 
     write(pki, args.config_file)

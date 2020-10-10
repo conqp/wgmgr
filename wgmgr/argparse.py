@@ -1,7 +1,7 @@
 """CLI arguments parsing."""
 
 from argparse import ArgumentParser
-from ipaddress import IPv4Address, IPv4Network
+from ipaddress import ip_address, ip_network
 from pathlib import Path
 
 from wgmgr.functions import wgkey
@@ -19,10 +19,10 @@ def _add_initpki_parser(subparsers):
     add = subparsers.add_parser('init', help='initializes the PKI')
     add.add_argument('name', help='the name of the network device')
     add.add_argument('description', help='a description of the network')
-    add.add_argument('network', type=IPv4Network, help='the IPv4 network')
+    add.add_argument('network', type=ip_network, help='the IP network')
     add.add_argument(
-        'address', type=IPv4Address, help="the server's IPv4 address")
-    add.add_argument('endpoint', help="the server's IPv4 address")
+        'address', type=ip_address, help="the server's IP address")
+    add.add_argument('endpoint', help="the server's IP address and port")
     add.add_argument(
         '-p', '--psk', action='store_true',
         help='generate and add a pre-shared key')
@@ -35,8 +35,7 @@ def _add_add_client_parser(subparsers):
     add_client.add_argument(
         'pubkey', type=wgkey, help="the client's public key")
     add_client.add_argument(
-        'address', nargs='?', type=IPv4Address,
-        help="the client's IPv4Address")
+        'address', nargs='?', type=ip_address, help="the client's IPAddress")
     add_client.add_argument('-n', '--name', help='a descriptive name')
 
 
@@ -47,7 +46,7 @@ def _add_modify_client_parser(subparsers):
     add_client.add_argument(
         '-p', '--pubkey', type=wgkey, help="the client's public key")
     add_client.add_argument(
-        '-a', '--address', type=IPv4Address, help="the client's IPv4Address")
+        '-a', '--address', type=ip_address, help="the client's IP address")
     add_client.add_argument('name', nargs='?', help="the client's name")
 
 
