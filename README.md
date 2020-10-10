@@ -17,7 +17,9 @@ for usage instructions.
 *Disclaimer*: Do NOT use the private keys listed here!
 
     $ wgmgr init MyPrivateNetwork "Some description" 10.8.0.0/24 10.8.0.1 my.server.com:51820
+
     $ wgmgr client add r9lJ1vbl0zTwZ8MiwefNAETqEPcOKNKu2Vzm+lU8pwU= -n MyFirstClient
+
     $ wgmgr server dump
     [NetDev]
     Name = MyPrivateNetwork
@@ -31,6 +33,7 @@ for usage instructions.
     [WireGuardPeer]
     PublicKey = r9lJ1vbl0zTwZ8MiwefNAETqEPcOKNKu2Vzm+lU8pwU=
     AllowedIPs = 10.8.0.2/32
+
     $ wgmgr client dump MyFirstClient
     [Interface]
     PrivateKey = <your private key>
