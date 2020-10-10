@@ -1,6 +1,6 @@
 """CLI arguments parsing."""
 
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from ipaddress import ip_address, ip_network
 from pathlib import Path
 
@@ -102,7 +102,7 @@ def _add_server_parser(subparsers):
     _add_dump_server_parser(action)
 
 
-def get_args():
+def get_args() -> Namespace:
     """Parses the command line arguments."""
 
     parser = ArgumentParser()

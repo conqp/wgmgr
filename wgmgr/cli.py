@@ -1,5 +1,6 @@
 """WireGuard manager CLI parser."""
 
+from argparse import Namespace
 from configparser import DuplicateSectionError
 from logging import getLogger
 from sys import exit    # pylint: disable=W0622
@@ -21,7 +22,7 @@ __all__ = ['main']
 LOGGER = getLogger('wgmgr')
 
 
-def _add_client(args, pki):
+def _add_client(args: Namespace, pki: PKI):
     """Adds a new client."""
 
     try:
@@ -42,7 +43,7 @@ def _add_client(args, pki):
     write(pki, args.config_file)
 
 
-def _modify_client(args, pki):
+def _modify_client(args: Namespace, pki: PKI):
     """Modifies a client."""
 
     try:
@@ -61,7 +62,7 @@ def _modify_client(args, pki):
     write(pki, args.config_file)
 
 
-def _remove_client(args, pki):
+def _remove_client(args: Namespace, pki: PKI):
     """Removes a client."""
 
     try:
@@ -76,7 +77,7 @@ def _remove_client(args, pki):
     write(pki, args.config_file)
 
 
-def _dump_client(args, pki):
+def _dump_client(args: Namespace, pki: PKI):
     """Dumps a client."""
 
     try:
@@ -94,7 +95,7 @@ def _dump_client(args, pki):
     dump(text, path=args.out_file)
 
 
-def _handle_client(args, pki):
+def _handle_client(args: Namespace, pki: PKI):
     """Handles actions on clients."""
 
     if args.action == 'add':
@@ -109,7 +110,7 @@ def _handle_client(args, pki):
         _dump_client(args, pki)
 
 
-def _handle_server(args, pki):
+def _handle_server(args: Namespace, pki: PKI):
     """Handles actions on servers."""
 
     if args.action == 'dump':

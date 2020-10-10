@@ -1,15 +1,17 @@
 """Common functions."""
 
 from base64 import b64decode
+from configparser import ConfigParser
 from io import StringIO
 from os import linesep
+from pathlib import Path
 from sys import stdout
 
 
 __all__ = ['config_to_string', 'dump', 'stripped', 'wgkey', 'write']
 
 
-def config_to_string(config):
+def config_to_string(config: ConfigParser) -> str:
     """Converts the configuration parser into a string."""
 
     stringio = StringIO()
@@ -18,7 +20,7 @@ def config_to_string(config):
     return stringio.read()
 
 
-def dump(text, path=None):
+def dump(text: str, path: Path = None):
     """Dumps a text to a file."""
 
     if path is None:
@@ -29,13 +31,13 @@ def dump(text, path=None):
             file.write(linesep)
 
 
-def stripped(string):
+def stripped(string: str) -> str:
     """Returns a stripped string."""
 
     return string.strip()
 
 
-def wgkey(string):
+def wgkey(string: str) -> str:
     """Checks whether a string is a valid WireGuard key."""
 
     if len(string) != 44:
@@ -45,7 +47,7 @@ def wgkey(string):
     return string
 
 
-def write(config, path):
+def write(config: ConfigParser, path: Path):
     """Writes the config parser to the respective file."""
 
     if path is None:

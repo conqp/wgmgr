@@ -1,9 +1,15 @@
 """PKI management."""
 
-from configparser import DuplicateSectionError, ConfigParser
+from configparser import DuplicateSectionError, ConfigParser, SectionProxy
 from contextlib import suppress
-from ipaddress import ip_address, ip_network
+from ipaddress import ip_address
+from ipaddress import ip_network
+from ipaddress import IPv4Address
+from ipaddress import IPv4Network
+from ipaddress import IPv6Address
+from ipaddress import IPv6Network
 from os import linesep
+from typing import Generator, Tuple, Union
 
 from wgtools import genpsk, keypair
 
@@ -20,6 +26,8 @@ __all__ = ['PKI']
 
 
 SERVER = 'Server'
+IPAddress = Union[IPv4Address, IPv6Address]
+IPNetwork = Union[IPv4Network, IPv6Network]
 
 
 class PKI(ConfigParser):    # pylint: disable = R0901
@@ -31,25 +39,25 @@ class PKI(ConfigParser):    # pylint: disable = R0901
         self.optionxform = stripped
 
     @property
-    def network(self):
+    def network(self) -> IPNetwork:
         """Returns the IP network."""
         return ip_network(self[SERVER]['Network'])
 
     @property
-    def addresses(self):
+    def addresses(self) -> Generator[IPAddress, None, None]:
         """Yields issued IP addresses."""
         for section in self.sections():
             with suppress(KeyError):
                 yield ip_address(self[section]['Address'])
 
     @property
-    def port(self):
+    def port(self) -> int:
         """Returns the server's port."""
         _, port = self[SERVER]['Endpoint'].rsplit(':', maxsplit=1)
         return int(port)
 
     @property
-    def clients(self):
+    def clients(self) -> Tuple[str, SectionProxy]:
         """Yields all client sections."""
         for section in self.sections():
             if section == SERVER:
@@ -58,20 +66,21 @@ class PKI(ConfigParser):    # pylint: disable = R0901
             yield (section, self[section])
 
     # pylint: disable=R0913
-    def init(self, name, description, network, address, endpoint, psk=False):
+    def init(self, name: str, description: str, network: IPNetwork,
+             address: IPAddress, endpoint: str, psk: bool = False):
         """Initializes the PKI."""
         self.add_section(SERVER)
         self[SERVER]['Name'] = str(name)
         self[SERVER]['Description'] = str(description)
         self[SERVER]['Network'] = str(network)
         self[SERVER]['Address'] = str(address)
-        self[SERVER]['Endpoint'] = str(endpoint)
+        self[SERVER]['Endpoint'] = endpoint
         self[SERVER]['PublicKey'], self[SERVER]['PrivateKey'] = keypair()
 
         if psk:
             self[SERVER]['PresharedKey'] = genpsk()
 
-    def get_address(self):
+    def get_address(self) -> IPAddress:
         """Returns a free address."""
         addresses = set(self.addresses)
 
@@ -81,7 +90,8 @@ class PKI(ConfigParser):    # pylint: disable = R0901
 
         raise NetworkExhausted()
 
-    def add_client(self, pubkey, address=None, name=None):
+    def add_client(self, pubkey: str, address: IPAddress = None,
+                   name: str = None):
         """Adds a client."""
         section = str(pubkey) if name is None else str(name)
 
@@ -102,7 +112,8 @@ class PKI(ConfigParser):    # pylint: disable = R0901
         client['PublicKey'] = str(pubkey)
         client['Address'] = str(address)
 
-    def modify_client(self, name, pubkey=None, address=None):
+    def modify_client(self, name: str, pubkey: str = None,
+                      address: IPAddress = None):
         """Modifies a client."""
         if name == SERVER:
             raise InvalidClientName()
@@ -121,14 +132,14 @@ class PKI(ConfigParser):    # pylint: disable = R0901
 
             client['Address'] = str(address)
 
-    def remove_client(self, name):
+    def remove_client(self, name: str) -> bool:
         """Removes the respective client."""
         if name == SERVER:
             raise InvalidClientName()
 
         return self.remove_section(name)
 
-    def list_clients(self):
+    def list_clients(self) -> str:
         """Lists all clients."""
         clients = ConfigParser()
         clients.optionxform = stripped
@@ -141,7 +152,7 @@ class PKI(ConfigParser):    # pylint: disable = R0901
 
         return config_to_string(clients).strip(linesep)
 
-    def dump_client(self, name):
+    def dump_client(self, name: str) -> str:
         """Dumps the client."""
         if name == SERVER:
             raise InvalidClientName()
@@ -172,7 +183,7 @@ class PKI(ConfigParser):    # pylint: disable = R0901
         config['Peer']['Endpoint'] = server['Endpoint']
         return config_to_string(config).strip(linesep)
 
-    def dump_netdev(self):
+    def dump_netdev(self) -> str:
         """Dumps a systemd.netdev configuration."""
         try:
             server = self[SERVER]
