@@ -8,6 +8,7 @@ setup(
     name='wgmgr',
     use_scm_version=True,
     setup_requires=['setuptools_scm'],
+    install_requires=['wgtools'],
     author='Richard Neumann',
     author_email='mail@richard-neumann.de',
     python_requires='>=3.8',
