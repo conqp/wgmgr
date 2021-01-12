@@ -1,8 +1,0 @@
-#! /usr/bin/env python3
-"""WireGuard PKI manager."""
-
-from wgmgr import main
-
-
-if __name__ == '__main__':
-    main()

@@ -1,13 +1,20 @@
 #! /usr/bin/env python
 
-from distutils.core import setup
+
+from setuptools import setup
+
 
 setup(
     name='wgmgr',
+    use_scm_version=True,
+    setup_requires=['setuptools_scm'],
     author='Richard Neumann',
-    author_email='<mail at richard dash neumann dot de>',
+    author_email='mail@richard-neumann.de',
+    python_requires='>=3.8',
     packages=['wgmgr'],
-    scripts=['files/wgmgr'],
+    entry_points={'console_scripts': ['wgmgr = wgmgr:main']},
     url='https://gitlab.com/coNQP/wgmgr',
     license='GPLv3',
-    description='WireGuard PKI manager.')
+    description='A wireguard PKI management tool.',
+    keywords='wireguard manager'
+)
